@@ -10,11 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ---------------------------------------------------------------------------
-# Location (default: La Queue-en-Brie — adjust if needed)
+# Location (default: Chennevières-sur-Marne — adjust if needed)
 # Find your coordinates at https://www.latlong.net/
 # ---------------------------------------------------------------------------
-LATITUDE = 48.7919594
-LONGITUDE = 2.5722845
+LATITUDE = 48.799549
+LONGITUDE = 2.540125
 TIMEZONE = "Europe/Paris"
 
 # ---------------------------------------------------------------------------
