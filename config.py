@@ -3,6 +3,12 @@ Tempo Certo configuration.
 Adjust the values below to match your home, work schedule, and preferences.
 """
 
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # ---------------------------------------------------------------------------
 # Location (default: La Queue-en-Brie — adjust if needed)
 # Find your coordinates at https://www.latlong.net/
@@ -69,18 +75,19 @@ NOTIFY_METHOD = "telegram"
 # 2. Send any message to your new bot, then open in a browser:
 #    https://api.telegram.org/bot<TOKEN>/getUpdates
 #    and copy the "chat":{"id": ...} value below
-TELEGRAM_BOT_TOKEN = "CHANGE-ME:your-bot-token"
-TELEGRAM_CHAT_ID = "CHANGE-ME"
+# Secrets live in .env (gitignored) — see .env.example for the template.
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "CHANGE-ME:your-bot-token")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "CHANGE-ME")
 
 # --- ntfy.sh (alternative) ---
 # Pick a unique, hard-to-guess topic name (e.g. "tempo-certo-a8f3k2") and
 # install the ntfy app (iOS/Android) or subscribe via https://ntfy.sh/<topic>
-NTFY_TOPIC = "tempo-certo-CHANGE-ME"
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "tempo-certo-CHANGE-ME")
 
 # --- Email (SMTP), only used if NOTIFY_METHOD = "email" ---
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_USER = "your.address@gmail.com"
-SMTP_PASSWORD = "app-password"  # use an "app password", not your main password
-SMTP_FROM = "your.address@gmail.com"
-SMTP_TO = "your.address@gmail.com"
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "your.address@gmail.com")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "app-password")  # use an "app password", not your main password
+SMTP_FROM = os.environ.get("SMTP_FROM", "your.address@gmail.com")
+SMTP_TO = os.environ.get("SMTP_TO", "your.address@gmail.com")
