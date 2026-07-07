@@ -139,6 +139,18 @@ def analyze_windows(hours):
 # 3. Clothing advice logic (with commute awareness)
 # ---------------------------------------------------------------------------
 
+FRENCH_WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+FRENCH_MONTHS = [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+]
+
+
+def french_date_label(dt):
+    """Format a date in French without depending on the system locale."""
+    return f"{FRENCH_WEEKDAYS[dt.weekday()]} {dt.day:02d} {FRENCH_MONTHS[dt.month - 1]} {dt.year}"
+
+
 WEATHER_CODE_LABELS = {
     0: "ciel dégagé", 1: "plutôt dégagé", 2: "partiellement nuageux", 3: "couvert",
     45: "brouillard", 48: "brouillard givrant",
@@ -264,54 +276,54 @@ def analyze_clothing(hours, work_mode):
 # ---------------------------------------------------------------------------
 
 def build_message(windows, clothing, work_mode):
-    today_label = datetime.now().strftime("%A %d %B %Y")
-    lines = [f"☀️ Tempo Certo — {today_label}", ""]
+    today_label = french_date_label(datetime.now())
+    lines = [f"☀️ *Tempo Certo* — {today_label}", ""]
 
     # Windows section
-    lines.append("🪟 Volets / fenêtres")
+    lines.append("*🪟 Volets / fenêtres*")
     any_window_advice = False
 
     if windows["is_hot"]:
         any_window_advice = True
         lines.append(
-            f"- Chaleur : fermer vers {windows['hot_close_hour']}h "
-            f"(pic à {round(windows['day_max_temp'])}°C vers {windows['max_temp_hour']}h)."
+            f"• Chaleur : fermer vers *{windows['hot_close_hour']}h* "
+            f"(pic à *{round(windows['day_max_temp'])}°C* vers {windows['max_temp_hour']}h)"
         )
         if windows["hot_reopen_hour"]:
-            lines.append(f"- Rouvrir possible vers {windows['hot_reopen_hour']}h en soirée.")
+            lines.append(f"• Réouverture possible vers *{windows['hot_reopen_hour']}h* en soirée")
         else:
-            lines.append("- Garder fermé toute la soirée, la fraîcheur ne revient pas vite.")
+            lines.append("• Garder fermé toute la soirée, la fraîcheur ne revient pas vite")
 
     if windows["is_cold_windy"]:
         any_window_advice = True
         lines.append(
-            f"- Froid + vent : garder les fenêtres fermées entre {windows['cold_windy_start']}h "
-            f"et {windows['cold_windy_end']}h pour éviter les déperditions de chaleur."
+            f"• Froid + vent : garder les fenêtres fermées entre *{windows['cold_windy_start']}h* "
+            f"et *{windows['cold_windy_end']}h* pour éviter les déperditions de chaleur"
         )
 
     if not any_window_advice:
-        lines.append(f"- Rien de particulier aujourd'hui (max {round(windows['day_max_temp'])}°C, peu de vent).")
+        lines.append(f"• Rien de particulier aujourd'hui (max {round(windows['day_max_temp'])}°C, peu de vent)")
 
     lines.append("")
 
     # Clothing section
-    lines.append("👕 Conseil du jour")
+    lines.append("*👕 Tenue du jour*")
     lines.append(
-        f"- {clothing['sky']}, {round(clothing['day_min_temp'])}°C à "
-        f"{round(clothing['day_max_temp'])}°C (ressenti max {round(clothing['feels_max'])}°C)."
+        f"{clothing['sky'].capitalize()}, {round(clothing['day_min_temp'])}°C → "
+        f"{round(clothing['day_max_temp'])}°C (ressenti max {round(clothing['feels_max'])}°C)"
     )
     for a in clothing["advice"]:
-        lines.append(f"- {a}")
+        lines.append(f"• {a}")
 
     # Commute section (office days only)
     if work_mode == "office" and clothing["commute_advice"]:
         lines.append("")
-        lines.append("🚇 Trajet bureau (Paris)")
+        lines.append("*🚇 Trajet bureau (Paris)*")
         for a in clothing["commute_advice"]:
-            lines.append(f"- {a}")
+            lines.append(f"• {a}")
     elif work_mode == "remote":
         lines.append("")
-        lines.append("🏠 Télétravail aujourd'hui — pas de contrainte de trajet.")
+        lines.append("🏠 Télétravail aujourd'hui — pas de contrainte de trajet")
 
     return "\n".join(lines)
 
@@ -320,11 +332,16 @@ def build_message(windows, clothing, work_mode):
 # 5. Sending the notification
 # ---------------------------------------------------------------------------
 
+def strip_markdown(text):
+    """Drop the *bold* markers used for Telegram; plain-text channels don't render them."""
+    return text.replace("*", "")
+
+
 def send_telegram(message):
     url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
     resp = requests.post(
         url,
-        data={"chat_id": config.TELEGRAM_CHAT_ID, "text": message},
+        data={"chat_id": config.TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"},
         timeout=10,
     )
     resp.raise_for_status()
@@ -334,14 +351,14 @@ def send_ntfy(message):
     url = f"https://ntfy.sh/{config.NTFY_TOPIC}"
     requests.post(
         url,
-        data=message.encode("utf-8"),
+        data=strip_markdown(message).encode("utf-8"),
         headers={"Title": "Tempo Certo", "Tags": "sunny,shirt"},
         timeout=10,
     )
 
 
 def send_email(message):
-    msg = MIMEText(message)
+    msg = MIMEText(strip_markdown(message))
     msg["Subject"] = "Tempo Certo — conseils du jour"
     msg["From"] = config.SMTP_FROM
     msg["To"] = config.SMTP_TO
