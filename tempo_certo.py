@@ -174,14 +174,15 @@ def analyze_clothing(hours):
     rain_probs = [h["rain_prob"] for h in hours]
     winds = [h["wind"] for h in hours]
     uvs = [h["uv"] for h in hours]
-    codes = [h["code"] for h in hours]
 
     day_min, day_max = min(temps), max(temps)
     feels_max = max(feels)
     max_rain_prob = max(rain_probs)
     max_wind = max(winds)
     max_uv = max(uvs)
-    dominant_code = max(set(codes), key=codes.count)
+    # Use the sky condition at the hottest hour rather than the day's most
+    # frequent code, which is more representative of what the day "feels" like.
+    dominant_code = max(hours, key=lambda h: h["temp"])["code"]
 
     advice = []
 
