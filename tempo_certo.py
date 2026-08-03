@@ -105,8 +105,10 @@ def analyze_windows(hours):
             if h["temp"] >= config.HOT_THRESHOLD_C:
                 hot_close_hour = max(h["hour"] - 1, 6)
                 break
-        if hot_close_hour is None or hot_close_hour > config.SUN_EXPOSURE_START_HOUR:
+        if hot_close_hour is None:
             hot_close_hour = config.SUN_EXPOSURE_START_HOUR
+        hot_close_hour = max(hot_close_hour, config.SUN_EXPOSURE_START_HOUR - 1)
+        hot_close_hour = min(hot_close_hour, config.SUN_EXPOSURE_START_HOUR)
 
         afternoon_hours = [h for h in hours if h["hour"] >= max_temp_hour["hour"]]
         for h in afternoon_hours:
