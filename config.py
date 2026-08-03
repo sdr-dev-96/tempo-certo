@@ -10,11 +10,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ---------------------------------------------------------------------------
-# Location (default: Chennevières-sur-Marne — adjust if needed)
+# Location
 # Find your coordinates at https://www.latlong.net/
+# Secrets/environment-specific values live in .env (gitignored) — see .env.example.
 # ---------------------------------------------------------------------------
-LATITUDE = 48.799549
-LONGITUDE = 2.540125
+LATITUDE = float(os.environ.get("LATITUDE", "48.799549"))
+LONGITUDE = float(os.environ.get("LONGITUDE", "2.540125"))
 TIMEZONE = "Europe/Paris"
 
 # ---------------------------------------------------------------------------
