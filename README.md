@@ -27,12 +27,18 @@ Non-secret settings live in `config.py` — open it and adjust:
 - `SUN_EXPOSURE_START_HOUR` / `END_HOUR`: the window when direct sun hits your home
 - `COLD_THRESHOLD_C`, `WINDY_THRESHOLD_KMH`: thresholds for the cold + windy window-closing advice
 - `NOTIFY_METHOD`: `"telegram"` (recommended), `"ntfy"`, or `"email"`
+- `FALLBACK_NOTIFY_METHODS`: methods to try, in order, if `NOTIFY_METHOD` fails to
+  send (e.g. `["ntfy"]`); empty by default
 
-Secrets and environment-specific values (bot tokens, passwords, chat IDs, coordinates)
-live in `.env` (gitignored — never committed). Copy `.env.example` to `.env` and fill
-in the values below; `config.py` loads them automatically via `python-dotenv`.
+Secrets and environment-specific values live in `.env` (gitignored — never
+committed). Copy `.env.example` to `.env` and fill in the values below;
+`config.py` loads them automatically via `python-dotenv`.
 
 - `LATITUDE` / `LONGITUDE`: your coordinates (find them at latlong.net)
+- `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID`: see Option A below
+- `NTFY_TOPIC`: see Option B below
+- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` / `SMTP_TO`: see Option C below
+- `DRY_RUN`: `1` to test without sending a notification, `0` by default (see below)
 
 ### Option A — Telegram (recommended)
 
@@ -66,13 +72,19 @@ python3 tempo_certo.py
 
 You should see the message printed in the terminal AND receive the notification.
 
-To test without sending a notification, run in dry-run mode:
+## 4. Test sans envoi (dry-run)
+
+Pour tester le script sans déclencher de vraie notification (utile pour
+vérifier la config ou le contenu du message), lance :
 
 ```bash
 DRY_RUN=1 python3 tempo_certo.py
 ```
 
-## 4. Automation with cron
+Le message est toujours affiché dans le terminal, mais `notify()` n'est pas
+appelée. Fonctionne aussi avec `DRY_RUN=1` mis directement dans `.env`.
+
+## 5. Automation with cron
 
 Edit your crontab:
 
@@ -99,16 +111,17 @@ TZ=Europe/Paris
 30 7 * * 6,0 cd /path/to/tempo-certo && venv/bin/python3 tempo_certo.py >> logs.txt 2>&1
 ```
 
-### Log rotation
+## 6. Rotation des logs
 
-`logs.txt` grows forever otherwise. Install the provided logrotate config
-(adjust the path inside the file to match your actual install path first):
+`logs.txt` grossit indéfiniment si rien ne le nettoie. Installe la config
+logrotate fournie (adapte d'abord le chemin de `logs.txt` dans le fichier à
+ton installation réelle) :
 
 ```bash
 sudo cp tempo-certo-logrotate.conf /etc/logrotate.d/tempo-certo
 ```
 
-## 5. Ideas for future evolution
+## 7. Ideas for future evolution
 
 - Factor in rain forecast for the next few hours (not just daily max)
 - Specific heatwave / weather alert notifications
