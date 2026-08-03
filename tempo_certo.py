@@ -390,7 +390,11 @@ def main():
         message = build_message(windows, clothing)
 
         print(message)  # useful for cron logs
-        notify(message)
+
+        if config.DRY_RUN:
+            print("DRY_RUN=1 : notification non envoyée.", file=sys.stderr)
+        else:
+            notify(message)
 
     except requests.RequestException as e:
         print(f"Network error while calling the weather API or notification service: {e}", file=sys.stderr)

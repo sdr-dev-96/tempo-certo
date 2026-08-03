@@ -66,6 +66,12 @@ python3 tempo_certo.py
 
 You should see the message printed in the terminal AND receive the notification.
 
+To test without sending a notification, run in dry-run mode:
+
+```bash
+DRY_RUN=1 python3 tempo_certo.py
+```
+
 ## 4. Automation with cron
 
 Edit your crontab:

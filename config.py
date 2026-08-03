@@ -75,3 +75,10 @@ SMTP_USER = os.environ.get("SMTP_USER", "your.address@gmail.com")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "app-password")  # use an "app password", not your main password
 SMTP_FROM = os.environ.get("SMTP_FROM", "your.address@gmail.com")
 SMTP_TO = os.environ.get("SMTP_TO", "your.address@gmail.com")
+
+# ---------------------------------------------------------------------------
+# Testing
+# ---------------------------------------------------------------------------
+
+# Set DRY_RUN=1 to print the message without sending a notification
+DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
