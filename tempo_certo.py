@@ -337,8 +337,31 @@ def notify(message):
 # 6. Main
 # ---------------------------------------------------------------------------
 
+def validate_credentials():
+    """Make sure the credentials required by config.NOTIFY_METHOD were actually filled in."""
+    if config.NOTIFY_METHOD == "telegram":
+        if "CHANGE-ME" in config.TELEGRAM_BOT_TOKEN or "CHANGE-ME" in config.TELEGRAM_CHAT_ID:
+            print(
+                "TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured — fill them in .env.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+    elif config.NOTIFY_METHOD == "ntfy":
+        if "CHANGE-ME" in config.NTFY_TOPIC:
+            print("NTFY_TOPIC not configured — fill it in .env.", file=sys.stderr)
+            sys.exit(1)
+    elif config.NOTIFY_METHOD == "email":
+        if "CHANGE-ME" in config.SMTP_USER or "CHANGE-ME" in config.SMTP_PASSWORD:
+            print(
+                "SMTP_USER / SMTP_PASSWORD not configured — fill them in .env.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+
 def main():
     try:
+        validate_credentials()
         data = fetch_forecast()
         hours = hours_today(data)
         if not hours:
