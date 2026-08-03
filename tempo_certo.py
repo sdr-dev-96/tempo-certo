@@ -6,8 +6,7 @@ Sends a daily Telegram notification with:
   1. Whether to close/reopen the shutters and windows, and when:
      - hot weather -> when to close (before peak heat) and reopen in the evening
      - cold + windy weather -> when to keep windows closed to avoid drafts/heat loss
-  2. What to wear given the day's weather, including commute-specific notes
-     for office days in Paris (public transport exposure)
+  2. What to wear given the day's weather
 
 Uses the free Open-Meteo API (no API key required).
 Notification sent via Telegram by default. ntfy.sh and email (SMTP) are
@@ -138,7 +137,7 @@ def analyze_windows(hours):
 
 
 # ---------------------------------------------------------------------------
-# 3. Clothing advice logic (with commute awareness)
+# 3. Clothing advice logic
 # ---------------------------------------------------------------------------
 
 FRENCH_WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -164,21 +163,8 @@ WEATHER_CODE_LABELS = {
 }
 
 
-def get_today_work_mode():
-    """Return 'office', 'remote' or 'off' for today, based on config.WORK_MODE_BY_WEEKDAY."""
-    weekday = datetime.now().weekday()  # Monday = 0 ... Sunday = 6
-    return config.WORK_MODE_BY_WEEKDAY.get(weekday, "off")
-
-
-def hour_data(hours, target_hour):
-    """Return the hour dict closest to target_hour, or None if hours is empty."""
-    if not hours:
-        return None
-    return min(hours, key=lambda h: abs(h["hour"] - target_hour))
-
-
-def analyze_clothing(hours, work_mode):
-    """Build clothing advice from the day's weather, including commute notes."""
+def analyze_clothing(hours):
+    """Build clothing advice from the day's weather."""
     if not hours:
         return None
 
@@ -235,31 +221,6 @@ def analyze_clothing(hours, work_mode):
     elif max_uv >= 6:
         advice.append("Indice UV élevé : pensez à la protection solaire.")
 
-    # --- Commute-specific advice (office days only) ---
-    commute_advice = []
-    if work_mode == "office":
-        morning = hour_data(hours, config.COMMUTE_MORNING_HOUR)
-        evening = hour_data(hours, config.COMMUTE_EVENING_HOUR)
-
-        if morning:
-            if morning["rain_prob"] >= 40:
-                commute_advice.append(
-                    f"Pluie probable au moment du trajet ({config.COMMUTE_MORNING_HOUR}h) : "
-                    f"prends un parapluie pour le trajet/les transports."
-                )
-            if morning["feels_like"] <= 5:
-                commute_advice.append(
-                    f"Il fera frais sur le trajet du matin (ressenti {round(morning['feels_like'])}°C) : "
-                    f"prévois une couche chaude pour l'attente sur le quai/l'arrêt."
-                )
-            if morning["wind"] >= config.WINDY_THRESHOLD_KMH:
-                commute_advice.append("Vent soutenu le matin : une capuche ou un bonnet peut aider en extérieur.")
-
-        if evening and evening["rain_prob"] >= 40:
-            commute_advice.append(
-                f"Pluie probable au retour ({config.COMMUTE_EVENING_HOUR}h) : garde le parapluie sur toi."
-            )
-
     return {
         "day_min_temp": day_min,
         "day_max_temp": day_max,
@@ -269,7 +230,6 @@ def analyze_clothing(hours, work_mode):
         "max_uv": max_uv,
         "sky": WEATHER_CODE_LABELS.get(dominant_code, "temps variable"),
         "advice": advice,
-        "commute_advice": commute_advice,
     }
 
 
@@ -277,7 +237,7 @@ def analyze_clothing(hours, work_mode):
 # 4. Message building
 # ---------------------------------------------------------------------------
 
-def build_message(windows, clothing, work_mode):
+def build_message(windows, clothing):
     today_label = french_date_label(datetime.now())
     lines = [f"☀️ *Tempo Certo* — {today_label}", ""]
 
@@ -316,16 +276,6 @@ def build_message(windows, clothing, work_mode):
     )
     for a in clothing["advice"]:
         lines.append(f"• {a}")
-
-    # Commute section (office days only)
-    if work_mode == "office" and clothing["commute_advice"]:
-        lines.append("")
-        lines.append("*🚇 Trajet bureau (Paris)*")
-        for a in clothing["commute_advice"]:
-            lines.append(f"• {a}")
-    elif work_mode == "remote":
-        lines.append("")
-        lines.append("🏠 Télétravail aujourd'hui — pas de contrainte de trajet")
 
     return "\n".join(lines)
 
@@ -394,10 +344,9 @@ def main():
             print("No hourly data available for today.", file=sys.stderr)
             sys.exit(1)
 
-        work_mode = get_today_work_mode()
         windows = analyze_windows(hours)
-        clothing = analyze_clothing(hours, work_mode)
-        message = build_message(windows, clothing, work_mode)
+        clothing = analyze_clothing(hours)
+        message = build_message(windows, clothing)
 
         print(message)  # useful for cron logs
         notify(message)

@@ -4,9 +4,7 @@ Sends a daily Telegram notification (6:00 AM on weekdays, 7:30 AM on weekends) w
 - whether to close/reopen the shutters and windows, and when — covers both
   hot weather (close before peak heat, reopen once it cools down) and
   cold + windy weather (keep windows closed to avoid drafts/heat loss)
-- a clothing suggestion based on the day's weather (temperature, rain, wind, UV),
-  including commute-specific notes on office days (waiting for public transport
-  in Paris matters more than the daily average weather)
+- a clothing suggestion based on the day's weather (temperature, rain, wind, UV)
 
 Built on the free [Open-Meteo](https://open-meteo.com/) API (no API key required).
 
@@ -25,17 +23,16 @@ cp .env.example .env
 
 Non-secret settings live in `config.py` — open it and adjust:
 
-- `LATITUDE` / `LONGITUDE`: your coordinates (find them at latlong.net)
 - `HOT_THRESHOLD_C`, `INDOOR_COMFORT_TEMP_C`: shutter close/reopen thresholds (hot weather)
 - `SUN_EXPOSURE_START_HOUR` / `END_HOUR`: the window when direct sun hits your home
 - `COLD_THRESHOLD_C`, `WINDY_THRESHOLD_KMH`: thresholds for the cold + windy window-closing advice
-- `WORK_MODE_BY_WEEKDAY`: your weekly office/remote pattern (Monday = 0 ... Sunday = 6)
-- `COMMUTE_MORNING_HOUR` / `COMMUTE_EVENING_HOUR`: roughly when you leave/return on office days
 - `NOTIFY_METHOD`: `"telegram"` (recommended), `"ntfy"`, or `"email"`
 
-Secrets (bot tokens, passwords, chat IDs) live in `.env` (gitignored — never committed).
-Copy `.env.example` to `.env` and fill in the values below; `config.py` loads them
-automatically via `python-dotenv`.
+Secrets and environment-specific values (bot tokens, passwords, chat IDs, coordinates)
+live in `.env` (gitignored — never committed). Copy `.env.example` to `.env` and fill
+in the values below; `config.py` loads them automatically via `python-dotenv`.
+
+- `LATITUDE` / `LONGITUDE`: your coordinates (find them at latlong.net)
 
 ### Option A — Telegram (recommended)
 

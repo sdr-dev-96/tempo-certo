@@ -45,26 +45,6 @@ COLD_THRESHOLD_C = 10
 WINDY_THRESHOLD_KMH = 30
 
 # ---------------------------------------------------------------------------
-# Work schedule (used for commute-specific clothing advice)
-# Monday = 0 ... Sunday = 6. Value: "office" (Paris office), "remote"
-# (télétravail), or "off". Adjust to match your actual weekly pattern.
-# ---------------------------------------------------------------------------
-WORK_MODE_BY_WEEKDAY = {
-    0: "office",  # Monday
-    1: "office",  # Tuesday
-    2: "remote",  # Wednesday
-    3: "office",  # Thursday
-    4: "remote",  # Friday
-    5: "off",     # Saturday
-    6: "off",     # Sunday
-}
-
-# Approximate hours of your commute, used to check rain/wind/cold specifically
-# at those times (waiting for public transport matters more than the daily average)
-COMMUTE_MORNING_HOUR = 8   # leaving home
-COMMUTE_EVENING_HOUR = 18  # heading back home
-
-# ---------------------------------------------------------------------------
 # Notification
 # ---------------------------------------------------------------------------
 
