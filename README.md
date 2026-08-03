@@ -93,6 +93,15 @@ TZ=Europe/Paris
 30 7 * * 6,0 cd /path/to/tempo-certo && venv/bin/python3 tempo_certo.py >> logs.txt 2>&1
 ```
 
+### Log rotation
+
+`logs.txt` grows forever otherwise. Install the provided logrotate config
+(adjust the path inside the file to match your actual install path first):
+
+```bash
+sudo cp tempo-certo-logrotate.conf /etc/logrotate.d/tempo-certo
+```
+
 ## 5. Ideas for future evolution
 
 - Factor in rain forecast for the next few hours (not just daily max)
@@ -101,13 +110,13 @@ TZ=Europe/Paris
 - Lightweight web UI (Flask) to tweak config without touching the code
 - Multi-user / multi-home support (several configs, several Telegram chats)
 - Home Assistant integration to auto-close motorized shutters
-- Pull work schedule from a calendar (Google Calendar/ICS) instead of a static weekly pattern
 
 ## Project files
 
 - `tempo_certo.py` — main script (weather fetch, windows/clothing logic, notification)
-- `config.py` — non-secret configuration (location, thresholds, work schedule, notification)
-- `.env` — secrets (bot tokens, passwords, chat IDs); gitignored, create it from `.env.example`
+- `config.py` — non-secret configuration (thresholds, notification)
+- `.env` — secrets and environment-specific values (coordinates, bot tokens, passwords, chat IDs); gitignored, create it from `.env.example`
 - `.env.example` — template for `.env`, safe to commit
+- `tempo-certo-logrotate.conf` — logrotate config for `logs.txt`
 - `requirements.txt` — dependencies: `requests`, `python-dotenv`
 - `README.md` — this file
