@@ -51,6 +51,9 @@ WINDY_THRESHOLD_KMH = 30
 # "telegram" (recommended), "ntfy" (free, no account), or "email" (SMTP)
 NOTIFY_METHOD = "telegram"
 
+# Methods to try, in order, if NOTIFY_METHOD fails to send (e.g. ["ntfy"])
+FALLBACK_NOTIFY_METHODS = []
+
 # --- Telegram ---
 # 1. Talk to @BotFather on Telegram, send /newbot, follow the steps to get a token
 # 2. Send any message to your new bot, then open in a browser:

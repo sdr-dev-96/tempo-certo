@@ -322,15 +322,31 @@ def send_email(message):
         server.sendmail(config.SMTP_FROM, [config.SMTP_TO], msg.as_string())
 
 
+NOTIFY_SENDERS = {
+    "telegram": send_telegram,
+    "ntfy": send_ntfy,
+    "email": send_email,
+}
+
+
 def notify(message):
-    if config.NOTIFY_METHOD == "telegram":
-        send_telegram(message)
-    elif config.NOTIFY_METHOD == "ntfy":
-        send_ntfy(message)
-    elif config.NOTIFY_METHOD == "email":
-        send_email(message)
-    else:
-        raise ValueError(f"Unknown notification method: {config.NOTIFY_METHOD}")
+    """Send via NOTIFY_METHOD, falling back to FALLBACK_NOTIFY_METHODS in order on failure."""
+    methods = [config.NOTIFY_METHOD, *config.FALLBACK_NOTIFY_METHODS]
+    last_error = None
+    for method in methods:
+        sender = NOTIFY_SENDERS.get(method)
+        if sender is None:
+            last_error = ValueError(f"Unknown notification method: {method}")
+            print(f"Notification via {method} failed: {last_error}", file=sys.stderr)
+            continue
+        try:
+            sender(message)
+            return
+        except Exception as e:
+            last_error = e
+            print(f"Notification via {method} failed: {e}", file=sys.stderr)
+
+    raise last_error
 
 
 # ---------------------------------------------------------------------------
