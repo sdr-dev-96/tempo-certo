@@ -20,7 +20,8 @@ Meant to run via cron:
 import sys
 import smtplib
 from email.mime.text import MIMEText
-from datetime import datetime, date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -49,7 +50,7 @@ def fetch_forecast():
 def hours_today(data):
     """Return a list of dicts {hour, temp, feels_like, rain_prob, wind, uv, code} for today."""
     hourly = data["hourly"]
-    today_str = date.today().isoformat()
+    today_str = datetime.now(ZoneInfo(config.TIMEZONE)).date().isoformat()
     result = []
     for i, ts in enumerate(hourly["time"]):
         if ts.startswith(today_str):
@@ -238,7 +239,7 @@ def analyze_clothing(hours):
 # ---------------------------------------------------------------------------
 
 def build_message(windows, clothing):
-    today_label = french_date_label(datetime.now())
+    today_label = french_date_label(datetime.now(ZoneInfo(config.TIMEZONE)))
     lines = [f"☀️ *Tempo Certo* — {today_label}", ""]
 
     # Windows section
