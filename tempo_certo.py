@@ -6,7 +6,8 @@ Sends a daily Telegram notification with:
   1. Whether to close/reopen the shutters and windows, and when:
      - hot weather -> when to close (before peak heat) and reopen in the evening
      - cold + windy weather -> when to keep windows closed to avoid drafts/heat loss
-  2. What to wear given the day's weather
+  2. What to wear given the day's weather, including commute-specific notes
+     for office days in Paris (public transport exposure)
 
 Uses the free Open-Meteo API (no API key required).
 Notification sent via Telegram by default. ntfy.sh and email (SMTP) are
@@ -18,10 +19,13 @@ Meant to run via cron:
 """
 
 import sys
+import time
+import logging
+import traceback
 import smtplib
 from email.mime.text import MIMEText
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, date
+from pathlib import Path
 
 import requests
 
@@ -29,11 +33,56 @@ import config
 
 
 # ---------------------------------------------------------------------------
+# 0. Logging — one file per day in config.LOG_DIR, e.g. logs/2026-08-04.log
+# ---------------------------------------------------------------------------
+
+def setup_logging():
+    """Configure logging: one file per day in LOG_DIR, plus stdout (for cron)."""
+    log_dir = Path(config.LOG_DIR)
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    log_file = log_dir / f"{date.today().isoformat()}.log"
+
+    logger = logging.getLogger("tempo_certo")
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()  # avoid duplicate handlers if main() is called twice in a process
+
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
+    cleanup_old_logs(log_dir)
+    return logger
+
+
+def cleanup_old_logs(log_dir):
+    """Delete daily log files older than config.LOG_RETENTION_DAYS."""
+    cutoff = date.today().toordinal() - config.LOG_RETENTION_DAYS
+    for log_file in log_dir.glob("*.log"):
+        try:
+            file_date = date.fromisoformat(log_file.stem)
+            if file_date.toordinal() < cutoff:
+                log_file.unlink()
+        except ValueError:
+            continue  # not a YYYY-MM-DD.log file, leave it alone
+
+
+# ---------------------------------------------------------------------------
 # 1. Weather fetching (Open-Meteo, free, no API key)
 # ---------------------------------------------------------------------------
 
-def fetch_forecast():
-    """Fetch today's hourly forecast for the configured location."""
+def fetch_forecast(max_retries=3, backoff_seconds=5):
+    """Fetch today's hourly forecast for the configured location.
+
+    Open-Meteo occasionally returns transient 5xx errors (server-side load).
+    Retry a few times with an increasing delay before giving up.
+    """
     params = {
         "latitude": config.LATITUDE,
         "longitude": config.LONGITUDE,
@@ -42,15 +91,42 @@ def fetch_forecast():
         "timezone": config.TIMEZONE,
         "forecast_days": 1,
     }
-    resp = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=15)
-    resp.raise_for_status()
-    return resp.json()
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = requests.get("https://api.open-meteo.com/v1/forecast", params=params, timeout=15)
+            if resp.status_code >= 500:
+                # Transient server-side error: worth retrying
+                last_error = requests.HTTPError(
+                    f"{resp.status_code} Server Error: {resp.reason} for url: {resp.url}"
+                )
+                print(
+                    f"Open-Meteo returned {resp.status_code} (attempt {attempt}/{max_retries})",
+                    file=sys.stderr,
+                )
+                if attempt < max_retries:
+                    time.sleep(backoff_seconds * attempt)
+                    continue
+                resp.raise_for_status()
+            resp.raise_for_status()
+            return resp.json()
+        except requests.ConnectionError as e:
+            last_error = e
+            print(
+                f"Connection error reaching Open-Meteo (attempt {attempt}/{max_retries}): {e}",
+                file=sys.stderr,
+            )
+            if attempt < max_retries:
+                time.sleep(backoff_seconds * attempt)
+                continue
+            raise
+    raise last_error
 
 
 def hours_today(data):
     """Return a list of dicts {hour, temp, feels_like, rain_prob, wind, uv, code} for today."""
     hourly = data["hourly"]
-    today_str = datetime.now(ZoneInfo(config.TIMEZONE)).date().isoformat()
+    today_str = date.today().isoformat()
     result = []
     for i, ts in enumerate(hourly["time"]):
         if ts.startswith(today_str):
@@ -105,10 +181,8 @@ def analyze_windows(hours):
             if h["temp"] >= config.HOT_THRESHOLD_C:
                 hot_close_hour = max(h["hour"] - 1, 6)
                 break
-        if hot_close_hour is None:
+        if hot_close_hour is None or hot_close_hour > config.SUN_EXPOSURE_START_HOUR:
             hot_close_hour = config.SUN_EXPOSURE_START_HOUR
-        hot_close_hour = max(hot_close_hour, config.SUN_EXPOSURE_START_HOUR - 1)
-        hot_close_hour = min(hot_close_hour, config.SUN_EXPOSURE_START_HOUR)
 
         afternoon_hours = [h for h in hours if h["hour"] >= max_temp_hour["hour"]]
         for h in afternoon_hours:
@@ -138,7 +212,7 @@ def analyze_windows(hours):
 
 
 # ---------------------------------------------------------------------------
-# 3. Clothing advice logic
+# 3. Clothing advice logic (with commute awareness)
 # ---------------------------------------------------------------------------
 
 FRENCH_WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
@@ -164,8 +238,21 @@ WEATHER_CODE_LABELS = {
 }
 
 
-def analyze_clothing(hours):
-    """Build clothing advice from the day's weather."""
+def get_today_work_mode():
+    """Return 'office', 'remote' or 'off' for today, based on config.WORK_MODE_BY_WEEKDAY."""
+    weekday = datetime.now().weekday()  # Monday = 0 ... Sunday = 6
+    return config.WORK_MODE_BY_WEEKDAY.get(weekday, "off")
+
+
+def hour_data(hours, target_hour):
+    """Return the hour dict closest to target_hour, or None if hours is empty."""
+    if not hours:
+        return None
+    return min(hours, key=lambda h: abs(h["hour"] - target_hour))
+
+
+def analyze_clothing(hours, work_mode):
+    """Build clothing advice from the day's weather, including commute notes."""
     if not hours:
         return None
 
@@ -174,15 +261,14 @@ def analyze_clothing(hours):
     rain_probs = [h["rain_prob"] for h in hours]
     winds = [h["wind"] for h in hours]
     uvs = [h["uv"] for h in hours]
+    codes = [h["code"] for h in hours]
 
     day_min, day_max = min(temps), max(temps)
     feels_max = max(feels)
     max_rain_prob = max(rain_probs)
     max_wind = max(winds)
     max_uv = max(uvs)
-    # Use the sky condition at the hottest hour rather than the day's most
-    # frequent code, which is more representative of what the day "feels" like.
-    dominant_code = max(hours, key=lambda h: h["temp"])["code"]
+    dominant_code = max(set(codes), key=codes.count)
 
     advice = []
 
@@ -223,6 +309,31 @@ def analyze_clothing(hours):
     elif max_uv >= 6:
         advice.append("Indice UV élevé : pensez à la protection solaire.")
 
+    # --- Commute-specific advice (office days only) ---
+    commute_advice = []
+    if work_mode == "office":
+        morning = hour_data(hours, config.COMMUTE_MORNING_HOUR)
+        evening = hour_data(hours, config.COMMUTE_EVENING_HOUR)
+
+        if morning:
+            if morning["rain_prob"] >= 40:
+                commute_advice.append(
+                    f"Pluie probable au moment du trajet ({config.COMMUTE_MORNING_HOUR}h) : "
+                    f"prends un parapluie pour le trajet/les transports."
+                )
+            if morning["feels_like"] <= 5:
+                commute_advice.append(
+                    f"Il fera frais sur le trajet du matin (ressenti {round(morning['feels_like'])}°C) : "
+                    f"prévois une couche chaude pour l'attente sur le quai/l'arrêt."
+                )
+            if morning["wind"] >= config.WINDY_THRESHOLD_KMH:
+                commute_advice.append("Vent soutenu le matin : une capuche ou un bonnet peut aider en extérieur.")
+
+        if evening and evening["rain_prob"] >= 40:
+            commute_advice.append(
+                f"Pluie probable au retour ({config.COMMUTE_EVENING_HOUR}h) : garde le parapluie sur toi."
+            )
+
     return {
         "day_min_temp": day_min,
         "day_max_temp": day_max,
@@ -232,6 +343,7 @@ def analyze_clothing(hours):
         "max_uv": max_uv,
         "sky": WEATHER_CODE_LABELS.get(dominant_code, "temps variable"),
         "advice": advice,
+        "commute_advice": commute_advice,
     }
 
 
@@ -239,8 +351,8 @@ def analyze_clothing(hours):
 # 4. Message building
 # ---------------------------------------------------------------------------
 
-def build_message(windows, clothing):
-    today_label = french_date_label(datetime.now(ZoneInfo(config.TIMEZONE)))
+def build_message(windows, clothing, work_mode):
+    today_label = french_date_label(datetime.now())
     lines = [f"☀️ *Tempo Certo* — {today_label}", ""]
 
     # Windows section
@@ -279,6 +391,16 @@ def build_message(windows, clothing):
     for a in clothing["advice"]:
         lines.append(f"• {a}")
 
+    # Commute section (office days only)
+    if work_mode == "office" and clothing["commute_advice"]:
+        lines.append("")
+        lines.append("*🚇 Trajet bureau (Paris)*")
+        for a in clothing["commute_advice"]:
+            lines.append(f"• {a}")
+    elif work_mode == "remote":
+        lines.append("")
+        lines.append("🏠 Télétravail aujourd'hui — pas de contrainte de trajet")
+
     return "\n".join(lines)
 
 
@@ -312,6 +434,7 @@ def send_ntfy(message):
 
 
 def send_email(message):
+    """Send the daily notification by email — only used when NOTIFY_METHOD = 'email'."""
     msg = MIMEText(strip_markdown(message))
     msg["Subject"] = "Tempo Certo — conseils du jour"
     msg["From"] = config.SMTP_FROM
@@ -323,84 +446,77 @@ def send_email(message):
         server.sendmail(config.SMTP_FROM, [config.SMTP_TO], msg.as_string())
 
 
-NOTIFY_SENDERS = {
-    "telegram": send_telegram,
-    "ntfy": send_ntfy,
-    "email": send_email,
-}
-
-
 def notify(message):
-    """Send via NOTIFY_METHOD, falling back to FALLBACK_NOTIFY_METHODS in order on failure."""
-    methods = [config.NOTIFY_METHOD, *config.FALLBACK_NOTIFY_METHODS]
-    last_error = None
-    for method in methods:
-        sender = NOTIFY_SENDERS.get(method)
-        if sender is None:
-            last_error = ValueError(f"Unknown notification method: {method}")
-            print(f"Notification via {method} failed: {last_error}", file=sys.stderr)
-            continue
-        try:
-            sender(message)
-            return
-        except Exception as e:
-            last_error = e
-            print(f"Notification via {method} failed: {e}", file=sys.stderr)
+    if config.NOTIFY_METHOD == "telegram":
+        send_telegram(message)
+    elif config.NOTIFY_METHOD == "ntfy":
+        send_ntfy(message)
+    elif config.NOTIFY_METHOD == "email":
+        send_email(message)
+    else:
+        raise ValueError(f"Unknown notification method: {config.NOTIFY_METHOD}")
 
-    raise last_error
+
+def send_error_email(error_text):
+    """
+    Send an error alert by email, independent of NOTIFY_METHOD.
+    Uses the same SMTP_* settings as the optional email notification method,
+    so it works even if the daily notification normally goes via Telegram/ntfy.
+    Never raises: a failure here must not mask the original error.
+    """
+    if not config.ERROR_ALERT_EMAIL_ENABLED:
+        return
+    try:
+        today_label = french_date_label(datetime.now())
+        msg = MIMEText(
+            f"Tempo Certo a rencontré une erreur le {today_label} :\n\n{error_text}\n\n"
+            f"Voir le log du jour dans {config.LOG_DIR}/ sur le VPS pour le détail complet."
+        )
+        msg["Subject"] = "⚠️ Tempo Certo — erreur"
+        msg["From"] = config.SMTP_FROM
+        msg["To"] = config.ERROR_ALERT_EMAIL_TO
+
+        with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as server:
+            server.starttls()
+            server.login(config.SMTP_USER, config.SMTP_PASSWORD)
+            server.sendmail(config.SMTP_FROM, [config.ERROR_ALERT_EMAIL_TO], msg.as_string())
+    except Exception as email_error:
+        # Logged by the caller (main), which still has the logger in scope
+        print(f"Failed to send error alert email: {email_error}", file=sys.stderr)
 
 
 # ---------------------------------------------------------------------------
 # 6. Main
 # ---------------------------------------------------------------------------
 
-def validate_credentials():
-    """Make sure the credentials required by config.NOTIFY_METHOD were actually filled in."""
-    if config.NOTIFY_METHOD == "telegram":
-        if "CHANGE-ME" in config.TELEGRAM_BOT_TOKEN or "CHANGE-ME" in config.TELEGRAM_CHAT_ID:
-            print(
-                "TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured — fill them in .env.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-    elif config.NOTIFY_METHOD == "ntfy":
-        if "CHANGE-ME" in config.NTFY_TOPIC:
-            print("NTFY_TOPIC not configured — fill it in .env.", file=sys.stderr)
-            sys.exit(1)
-    elif config.NOTIFY_METHOD == "email":
-        if "CHANGE-ME" in config.SMTP_USER or "CHANGE-ME" in config.SMTP_PASSWORD:
-            print(
-                "SMTP_USER / SMTP_PASSWORD not configured — fill them in .env.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-
 def main():
+    logger = setup_logging()
     try:
-        validate_credentials()
         data = fetch_forecast()
         hours = hours_today(data)
         if not hours:
-            print("No hourly data available for today.", file=sys.stderr)
+            logger.error("No hourly data available for today.")
+            send_error_email("Aucune donnée horaire disponible pour aujourd'hui (réponse Open-Meteo vide).")
             sys.exit(1)
 
+        work_mode = get_today_work_mode()
         windows = analyze_windows(hours)
-        clothing = analyze_clothing(hours)
-        message = build_message(windows, clothing)
+        clothing = analyze_clothing(hours, work_mode)
+        message = build_message(windows, clothing, work_mode)
 
-        print(message)  # useful for cron logs
-
-        if config.DRY_RUN:
-            print("DRY_RUN=1 : notification non envoyée.", file=sys.stderr)
-        else:
-            notify(message)
+        logger.info("Message built:\n%s", message)
+        notify(message)
+        logger.info("Notification sent successfully via %s.", config.NOTIFY_METHOD)
 
     except requests.RequestException as e:
-        print(f"Network error while calling the weather API or notification service: {e}", file=sys.stderr)
+        logger.error("Network error while calling the weather API or notification service: %s", e)
+        logger.error(traceback.format_exc())
+        send_error_email(f"Erreur réseau (API météo ou service de notification) :\n{e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+        logger.error("Unexpected error: %s", e)
+        logger.error(traceback.format_exc())
+        send_error_email(f"Erreur inattendue :\n{e}\n\n{traceback.format_exc()}")
         sys.exit(1)
 
 
