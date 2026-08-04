@@ -10,12 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ---------------------------------------------------------------------------
-# Location
+# Location (default: Chennevières-sur-Marne — adjust if needed)
 # Find your coordinates at https://www.latlong.net/
-# Secrets/environment-specific values live in .env (gitignored) — see .env.example.
 # ---------------------------------------------------------------------------
-LATITUDE = float(os.environ.get("LATITUDE", "48.799549"))
-LONGITUDE = float(os.environ.get("LONGITUDE", "2.540125"))
+LATITUDE = 48.799549
+LONGITUDE = 2.540125
 TIMEZONE = "Europe/Paris"
 
 # ---------------------------------------------------------------------------
@@ -45,14 +44,31 @@ COLD_THRESHOLD_C = 10
 WINDY_THRESHOLD_KMH = 30
 
 # ---------------------------------------------------------------------------
+# Work schedule (used for commute-specific clothing advice)
+# Monday = 0 ... Sunday = 6. Value: "office" (Paris office), "remote"
+# (télétravail), or "off". Adjust to match your actual weekly pattern.
+# ---------------------------------------------------------------------------
+WORK_MODE_BY_WEEKDAY = {
+    0: "office",  # Monday
+    1: "office",  # Tuesday
+    2: "remote",  # Wednesday
+    3: "office",  # Thursday
+    4: "remote",  # Friday
+    5: "off",     # Saturday
+    6: "off",     # Sunday
+}
+
+# Approximate hours of your commute, used to check rain/wind/cold specifically
+# at those times (waiting for public transport matters more than the daily average)
+COMMUTE_MORNING_HOUR = 8   # leaving home
+COMMUTE_EVENING_HOUR = 18  # heading back home
+
+# ---------------------------------------------------------------------------
 # Notification
 # ---------------------------------------------------------------------------
 
 # "telegram" (recommended), "ntfy" (free, no account), or "email" (SMTP)
 NOTIFY_METHOD = "telegram"
-
-# Methods to try, in order, if NOTIFY_METHOD fails to send (e.g. ["ntfy"])
-FALLBACK_NOTIFY_METHODS = []
 
 # --- Telegram ---
 # 1. Talk to @BotFather on Telegram, send /newbot, follow the steps to get a token
@@ -68,7 +84,7 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "CHANGE-ME")
 # install the ntfy app (iOS/Android) or subscribe via https://ntfy.sh/<topic>
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "tempo-certo-CHANGE-ME")
 
-# --- Email (SMTP), only used if NOTIFY_METHOD = "email" ---
+# --- Email (SMTP), used if NOTIFY_METHOD = "email" AND/OR for error alerts below ---
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "your.address@gmail.com")
@@ -77,8 +93,17 @@ SMTP_FROM = os.environ.get("SMTP_FROM", "your.address@gmail.com")
 SMTP_TO = os.environ.get("SMTP_TO", "your.address@gmail.com")
 
 # ---------------------------------------------------------------------------
-# Testing
+# Logging — one file per day, kept in LOG_DIR, auto-cleaned after
+# LOG_RETENTION_DAYS days
 # ---------------------------------------------------------------------------
+LOG_DIR = os.environ.get("LOG_DIR", "logs")
+LOG_RETENTION_DAYS = int(os.environ.get("LOG_RETENTION_DAYS", "30"))
 
-# Set DRY_RUN=1 to print the message without sending a notification
-DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
+# ---------------------------------------------------------------------------
+# Error alerting by email — independent of NOTIFY_METHOD, so you get an
+# email even when the daily notification itself goes out via Telegram/ntfy.
+# Reuses the SMTP_* credentials above (SMTP_HOST/USER/PASSWORD must be set
+# for this to work, even if NOTIFY_METHOD is not "email").
+# ---------------------------------------------------------------------------
+ERROR_ALERT_EMAIL_ENABLED = os.environ.get("ERROR_ALERT_EMAIL_ENABLED", "true").lower() == "true"
+ERROR_ALERT_EMAIL_TO = os.environ.get("ERROR_ALERT_EMAIL_TO", SMTP_TO)
