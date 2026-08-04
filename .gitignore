@@ -31,6 +31,9 @@ out/
 *.log
 *.tmp
 
+# Tempo Certo daily log files
+logs/
+
 # Python
 __pycache__/
 *.pyc
