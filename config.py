@@ -22,7 +22,7 @@ TIMEZONE = "Europe/Paris"
 # ---------------------------------------------------------------------------
 
 # Temperature (°C) above which closing the shutters/windows is recommended
-HOT_THRESHOLD_C = 26
+HOT_THRESHOLD_C = 30
 
 # Temperature (°C) below which it's considered safe to reopen in the evening
 INDOOR_COMFORT_TEMP_C = 24
