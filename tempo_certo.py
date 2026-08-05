@@ -28,7 +28,7 @@ from clothing_advice import analyze_clothing, get_today_work_mode
 from log_setup import setup_logging
 from message_builder import build_message
 from notifiers import notify, send_error_email
-from weather_api import fetch_forecast, hours_today
+from weather_api import fetch_forecast, hours_today, sunrise_hour
 from windows_advice import analyze_windows
 
 logger = setup_logging()
@@ -61,7 +61,8 @@ def main():
             sys.exit(1)
 
         work_mode = get_today_work_mode()
-        windows = analyze_windows(hours)
+        sunrise_h = sunrise_hour(data)
+        windows = analyze_windows(hours, sunrise_h)
         clothing = analyze_clothing(hours, work_mode)
         message = build_message(windows, clothing, work_mode)
 

@@ -23,6 +23,7 @@ def fetch_forecast(max_retries=3, backoff_seconds=5):
         "longitude": config.LONGITUDE,
         "hourly": "temperature_2m,apparent_temperature,precipitation_probability,"
                   "weathercode,wind_speed_10m,uv_index",
+        "daily": "sunrise",
         "timezone": config.TIMEZONE,
         "forecast_days": 1,
     }
@@ -73,3 +74,11 @@ def hours_today(data):
                 "code": hourly["weathercode"][i],
             })
     return result
+
+
+def sunrise_hour(data):
+    """Return today's sunrise hour (0-23), or None if the API didn't return it."""
+    sunrise_times = data.get("daily", {}).get("sunrise")
+    if not sunrise_times:
+        return None
+    return int(sunrise_times[0][11:13])

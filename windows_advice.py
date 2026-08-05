@@ -3,7 +3,7 @@
 import config
 
 
-def analyze_windows(hours):
+def analyze_windows(hours, sunrise_h=None):
     """
     Determine what to do with shutters/windows today. Two independent
     scenarios can both apply on the same day:
@@ -12,6 +12,10 @@ def analyze_windows(hours):
     - Find the hour of peak temperature.
     - Recommend closing 1h BEFORE the outdoor temperature crosses the "hot"
       threshold (config.HOT_THRESHOLD_C), to keep overnight coolness inside.
+    - The search starts at sunrise (sunrise_h, from the Open-Meteo "daily"
+      forecast), falling back to config.SUN_EXPOSURE_START_HOUR if sunrise
+      data isn't available. This avoids false positives on tropical nights,
+      where temperature is already above threshold before dawn.
     - Never close later than the start of direct sun exposure
       (config.SUN_EXPOSURE_START_HOUR), since the apartment only gets direct
       sun in the late afternoon/evening.
@@ -34,13 +38,13 @@ def analyze_windows(hours):
     hot_reopen_hour = None
     is_hot = day_max >= config.HOT_THRESHOLD_C
     if is_hot:
+        lower_bound_hour = sunrise_h if sunrise_h is not None else config.SUN_EXPOSURE_START_HOUR
         for h in hours:
-            if h["temp"] >= config.HOT_THRESHOLD_C:
-                hot_close_hour = max(h["hour"] - 1, 6)
+            if h["hour"] >= lower_bound_hour and h["temp"] >= config.HOT_THRESHOLD_C:
+                hot_close_hour = max(h["hour"] - 1, lower_bound_hour)
                 break
         if hot_close_hour is None:
             hot_close_hour = config.SUN_EXPOSURE_START_HOUR
-        hot_close_hour = max(hot_close_hour, config.SUN_EXPOSURE_START_HOUR - 1)
         hot_close_hour = min(hot_close_hour, config.SUN_EXPOSURE_START_HOUR)
 
         afternoon_hours = [h for h in hours if h["hour"] >= max_temp_hour["hour"]]
