@@ -70,6 +70,9 @@ COMMUTE_EVENING_HOUR = 18  # heading back home
 # "telegram" (recommended), "ntfy" (free, no account), or "email" (SMTP)
 NOTIFY_METHOD = "telegram"
 
+# Methods to try, in order, if NOTIFY_METHOD fails to send (e.g. ["ntfy"])
+FALLBACK_NOTIFY_METHODS = []
+
 # --- Telegram ---
 # 1. Talk to @BotFather on Telegram, send /newbot, follow the steps to get a token
 # 2. Send any message to your new bot, then open in a browser:
@@ -107,3 +110,10 @@ LOG_RETENTION_DAYS = int(os.environ.get("LOG_RETENTION_DAYS", "30"))
 # ---------------------------------------------------------------------------
 ERROR_ALERT_EMAIL_ENABLED = os.environ.get("ERROR_ALERT_EMAIL_ENABLED", "true").lower() == "true"
 ERROR_ALERT_EMAIL_TO = os.environ.get("ERROR_ALERT_EMAIL_TO", SMTP_TO)
+
+# ---------------------------------------------------------------------------
+# Testing
+# ---------------------------------------------------------------------------
+
+# Set DRY_RUN=1 to print the message without sending a notification
+DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
