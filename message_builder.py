@@ -10,7 +10,12 @@ from i18n import t
 
 def build_message(windows, clothing, work_mode):
     today_label = i18n.date_label(datetime.now(ZoneInfo(config.TIMEZONE)))
-    lines = [t("header", date=today_label), ""]
+    lines = []
+    if config.GREETING_ENABLED:
+        lines.append(i18n.greeting())
+        lines.append("")
+    lines.append(t("header", date=today_label))
+    lines.append("")
 
     # Windows section
     lines.append(t("windows_section_title"))

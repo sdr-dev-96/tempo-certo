@@ -70,6 +70,9 @@ COMMUTE_EVENING_HOUR = 18  # heading back home
 # Language of the notification message: "fr" (default) or "en"
 LANGUAGE = os.environ.get("LANGUAGE", "fr")
 
+# Whether to prefix the notification with a greeting (e.g. "Bonjour !")
+GREETING_ENABLED = os.environ.get("GREETING_ENABLED", "true").lower() == "true"
+
 # "telegram" (recommended), "ntfy" (free, no account), or "email" (SMTP)
 NOTIFY_METHOD = "telegram"
 
