@@ -1,6 +1,6 @@
 """Shutters / windows logic."""
 
-import config
+from . import config
 
 
 def analyze_windows(hours, sunrise_h=None):

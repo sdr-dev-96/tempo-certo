@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tempo Certo
 ===========
@@ -13,6 +12,8 @@ Uses the free Open-Meteo API (no API key required).
 Notification sent via Telegram by default. ntfy.sh and email (SMTP) are
 available as alternatives — see config.py.
 
+Entry point: `python -m tempo_certo`.
+
 Meant to run via cron:
   0 6 * * 1-5    -> 6:00 AM on weekdays
   30 7 * * 6,0   -> 7:30 AM on weekends
@@ -23,13 +24,13 @@ import traceback
 
 import requests
 
-import config
-from clothing_advice import analyze_clothing, get_today_work_mode
-from log_setup import setup_logging
-from message_builder import build_message
-from notifiers import notify, send_error_email
-from weather_api import fetch_forecast, hours_today, sunrise_hour
-from windows_advice import analyze_windows
+from . import config
+from .clothing_advice import analyze_clothing, get_today_work_mode
+from .log_setup import setup_logging
+from .message_builder import build_message
+from .notifiers import notify, send_error_email
+from .weather_api import fetch_forecast, hours_today, sunrise_hour
+from .windows_advice import analyze_windows
 
 logger = setup_logging()
 

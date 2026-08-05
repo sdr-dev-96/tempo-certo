@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-import config
+from . import config
 
 logger = logging.getLogger(__name__)
 
