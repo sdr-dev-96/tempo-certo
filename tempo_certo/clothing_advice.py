@@ -3,9 +3,8 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import config
-import i18n
-from i18n import t
+from . import config, i18n
+from .i18n import t
 
 
 def get_today_work_mode():

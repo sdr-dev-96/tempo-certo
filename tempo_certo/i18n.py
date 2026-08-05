@@ -2,7 +2,7 @@
 
 import random
 
-import config
+from . import config
 
 DEFAULT_LANGUAGE = "fr"
 

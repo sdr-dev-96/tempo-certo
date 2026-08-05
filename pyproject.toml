@@ -1,0 +1,17 @@
+[project]
+name = "tempo-certo"
+version = "0.1.0"
+description = "Daily Telegram/ntfy/email notification with shutters/windows and outfit advice based on the weather forecast."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["tempo_certo*"]

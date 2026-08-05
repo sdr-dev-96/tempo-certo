@@ -15,7 +15,7 @@ git clone <this repo> tempo-certo   # or just copy the files
 cd tempo-certo
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install .
 cp .env.example .env
 ```
 
@@ -67,7 +67,7 @@ https://myaccount.google.com/apppasswords
 ## 3. Manual test
 
 ```bash
-python3 tempo_certo.py
+python -m tempo_certo
 ```
 
 You should see the message printed in the terminal AND receive the notification.
@@ -78,7 +78,7 @@ Pour tester le script sans déclencher de vraie notification (utile pour
 vérifier la config ou le contenu du message), lance :
 
 ```bash
-DRY_RUN=1 python3 tempo_certo.py
+DRY_RUN=1 python -m tempo_certo
 ```
 
 Le message est toujours affiché dans le terminal, mais `notify()` n'est pas
@@ -96,10 +96,10 @@ Add (adjust paths to your setup):
 
 ```cron
 # Tempo Certo — 6:00 AM on weekdays (Monday to Friday)
-0 6 * * 1-5 cd /path/to/tempo-certo && venv/bin/python3 tempo_certo.py >> logs.txt 2>&1
+0 6 * * 1-5 cd /path/to/tempo-certo && venv/bin/python -m tempo_certo >> logs.txt 2>&1
 
 # Tempo Certo — 7:30 AM on weekends (Saturday, Sunday)
-30 7 * * 6,0 cd /path/to/tempo-certo && venv/bin/python3 tempo_certo.py >> logs.txt 2>&1
+30 7 * * 6,0 cd /path/to/tempo-certo && venv/bin/python -m tempo_certo >> logs.txt 2>&1
 ```
 
 Make sure cron runs in the expected timezone (`TZ=Europe/Paris` can be added at
@@ -107,9 +107,18 @@ the top of your crontab if your server is in a different timezone):
 
 ```cron
 TZ=Europe/Paris
-0 6 * * 1-5 cd /path/to/tempo-certo && venv/bin/python3 tempo_certo.py >> logs.txt 2>&1
-30 7 * * 6,0 cd /path/to/tempo-certo && venv/bin/python3 tempo_certo.py >> logs.txt 2>&1
+0 6 * * 1-5 cd /path/to/tempo-certo && venv/bin/python -m tempo_certo >> logs.txt 2>&1
+30 7 * * 6,0 cd /path/to/tempo-certo && venv/bin/python -m tempo_certo >> logs.txt 2>&1
 ```
+
+> ⚠️ **Mise à jour d'un déploiement existant** : ce projet est passé d'un
+> script plat (`tempo_certo.py`) à un package (`tempo_certo/`), lancé via
+> `python -m tempo_certo`. Après avoir mis à jour le repo sur le VPS,
+> pense à :
+> 1. relancer `pip install .` dans le venv (remplace `requirements.txt`) ;
+> 2. **modifier la ligne de cron existante** pour utiliser
+>    `venv/bin/python -m tempo_certo` au lieu de
+>    `venv/bin/python3 tempo_certo.py`.
 
 ## 6. Rotation des logs
 
@@ -132,10 +141,30 @@ sudo cp tempo-certo-logrotate.conf /etc/logrotate.d/tempo-certo
 
 ## Project files
 
-- `tempo_certo.py` — main script (weather fetch, windows/clothing logic, notification)
-- `config.py` — non-secret configuration (thresholds, notification)
-- `.env` — secrets and environment-specific values (coordinates, bot tokens, passwords, chat IDs); gitignored, create it from `.env.example`
-- `.env.example` — template for `.env`, safe to commit
-- `tempo-certo-logrotate.conf` — logrotate config for `logs.txt`
-- `requirements.txt` — dependencies: `requests`, `python-dotenv`
-- `README.md` — this file
+```
+tempo-certo/
+├── tempo_certo/            # the package — run with `python -m tempo_certo`
+│   ├── __init__.py
+│   ├── __main__.py         # entry point (weather fetch, windows/clothing logic, notification)
+│   ├── config.py           # non-secret configuration (thresholds, notification)
+│   ├── i18n.py               # fr/en strings for the notification message
+│   ├── weather_api.py       # Open-Meteo fetch + parsing
+│   ├── windows_advice.py    # shutters/windows logic
+│   ├── clothing_advice.py   # outfit logic
+│   ├── message_builder.py   # assembles the final notification text
+│   ├── notifiers.py         # Telegram / ntfy / email sending
+│   └── log_setup.py         # daily log file + stdout logging
+├── tests/                   # unit tests (pure logic, no network calls)
+├── .env                     # secrets and environment-specific values (coordinates, bot tokens, passwords, chat IDs); gitignored, create it from `.env.example`
+├── .env.example             # template for `.env`, safe to commit
+├── tempo-certo-logrotate.conf  # logrotate config for `logs.txt`
+├── pyproject.toml           # project metadata + dependencies (`requests`, `python-dotenv`)
+└── README.md                # this file
+```
+
+Run the test suite with:
+
+```bash
+pip install pytest
+pytest
+```

@@ -8,8 +8,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-import config
-import i18n
+from . import config, i18n
 
 logger = logging.getLogger(__name__)
 
