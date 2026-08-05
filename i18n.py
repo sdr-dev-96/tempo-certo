@@ -1,5 +1,7 @@
 """Translations for the daily notification message."""
 
+import random
+
 import config
 
 DEFAULT_LANGUAGE = "fr"
@@ -44,6 +46,17 @@ WEATHER_CODE_LABELS = {
 WEATHER_CODE_FALLBACK = {
     "fr": "temps variable",
     "en": "variable weather",
+}
+
+GREETINGS = {
+    "fr": ["Bonjour", "Salut", "Coucou"],
+    "en": ["Hello", "Hi", "Hey"],
+}
+
+# French typography puts a space before "!"; English doesn't.
+GREETING_PUNCTUATION = {
+    "fr": " !",
+    "en": "!",
 }
 
 STRINGS = {
@@ -156,3 +169,10 @@ def weather_label(code, lang=None):
     """Return the human-readable label for an Open-Meteo weather code."""
     lang = _lang(lang)
     return WEATHER_CODE_LABELS[lang].get(code, WEATHER_CODE_FALLBACK[lang])
+
+
+def greeting(lang=None):
+    """Return a random greeting, formatted with locale-appropriate punctuation."""
+    lang = _lang(lang)
+    word = random.choice(GREETINGS[lang])
+    return f"{word}{GREETING_PUNCTUATION[lang]}"
