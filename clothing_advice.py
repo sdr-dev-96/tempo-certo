@@ -4,7 +4,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import config
-from message_builder import WEATHER_CODE_LABELS
+import i18n
+from i18n import t
 
 
 def get_today_work_mode():
@@ -44,40 +45,37 @@ def analyze_clothing(hours, work_mode):
 
     # Base outfit according to max "feels like" temperature
     if feels_max >= 30:
-        advice.append("Tenue très légère (coton/lin), vêtements amples et clairs.")
+        advice.append(t("outfit_very_light"))
     elif feels_max >= 25:
-        advice.append("Tenue légère d'été, manches courtes.")
+        advice.append(t("outfit_light_summer"))
     elif feels_max >= 18:
-        advice.append("Tenue légère, une petite veste peut suffire le soir.")
+        advice.append(t("outfit_light_evening_jacket"))
     elif feels_max >= 10:
-        advice.append("Prévoir une veste ou un pull, quelques couches.")
+        advice.append(t("outfit_jacket_layers"))
     else:
-        advice.append("Habillage chaud : manteau, couches superposées.")
+        advice.append(t("outfit_warm"))
 
     # Day/night temperature swing
     if (day_max - day_min) >= 10:
-        advice.append(
-            f"Écart de température important ({round(day_min)}°C à {round(day_max)}°C) : "
-            f"prévoir une couche à enlever/ajouter dans la journée."
-        )
+        advice.append(t("temp_swing", min_temp=round(day_min), max_temp=round(day_max)))
 
     # Rain (general)
     if max_rain_prob >= 60:
-        advice.append("Risque de pluie élevé : parapluie ou imperméable conseillé.")
+        advice.append(t("rain_high"))
     elif max_rain_prob >= 30:
-        advice.append("Risque de pluie modéré : un parapluie de sécurité peut être utile.")
+        advice.append(t("rain_moderate"))
 
     # Wind (general)
     if max_wind >= 40:
-        advice.append("Vent fort prévu : évitez les vêtements amples/parapluies fragiles.")
+        advice.append(t("wind_strong"))
     elif max_wind >= 25:
-        advice.append("Un peu de vent : une couche coupe-vent peut aider.")
+        advice.append(t("wind_light"))
 
     # UV
     if max_uv >= 8:
-        advice.append("Indice UV très élevé : crème solaire, chapeau et lunettes de soleil indispensables.")
+        advice.append(t("uv_very_high"))
     elif max_uv >= 6:
-        advice.append("Indice UV élevé : pensez à la protection solaire.")
+        advice.append(t("uv_high"))
 
     # --- Commute-specific advice (office days only) ---
     commute_advice = []
@@ -87,22 +85,16 @@ def analyze_clothing(hours, work_mode):
 
         if morning:
             if morning["rain_prob"] >= 40:
-                commute_advice.append(
-                    f"Pluie probable au moment du trajet ({config.COMMUTE_MORNING_HOUR}h) : "
-                    f"prends un parapluie pour le trajet/les transports."
-                )
+                commute_advice.append(t("commute_rain_morning", hour=config.COMMUTE_MORNING_HOUR))
             if morning["feels_like"] <= 5:
                 commute_advice.append(
-                    f"Il fera frais sur le trajet du matin (ressenti {round(morning['feels_like'])}°C) : "
-                    f"prévois une couche chaude pour l'attente sur le quai/l'arrêt."
+                    t("commute_cold_morning", feels=round(morning["feels_like"]))
                 )
             if morning["wind"] >= config.WINDY_THRESHOLD_KMH:
-                commute_advice.append("Vent soutenu le matin : une capuche ou un bonnet peut aider en extérieur.")
+                commute_advice.append(t("commute_wind_morning"))
 
         if evening and evening["rain_prob"] >= 40:
-            commute_advice.append(
-                f"Pluie probable au retour ({config.COMMUTE_EVENING_HOUR}h) : garde le parapluie sur toi."
-            )
+            commute_advice.append(t("commute_rain_evening", hour=config.COMMUTE_EVENING_HOUR))
 
     return {
         "day_min_temp": day_min,
@@ -111,7 +103,7 @@ def analyze_clothing(hours, work_mode):
         "max_rain_prob": max_rain_prob,
         "max_wind": max_wind,
         "max_uv": max_uv,
-        "sky": WEATHER_CODE_LABELS.get(dominant_code, "temps variable"),
+        "sky": i18n.weather_label(dominant_code),
         "advice": advice,
         "commute_advice": commute_advice,
     }

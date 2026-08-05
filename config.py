@@ -67,6 +67,9 @@ COMMUTE_EVENING_HOUR = 18  # heading back home
 # Notification
 # ---------------------------------------------------------------------------
 
+# Language of the notification message: "fr" (default) or "en"
+LANGUAGE = os.environ.get("LANGUAGE", "fr")
+
 # "telegram" (recommended), "ntfy" (free, no account), or "email" (SMTP)
 NOTIFY_METHOD = "telegram"
 
