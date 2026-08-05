@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import config
-from message_builder import french_date_label
+import i18n
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def send_error_email(error_text):
     if not config.ERROR_ALERT_EMAIL_ENABLED:
         return
     try:
-        today_label = french_date_label(datetime.now(ZoneInfo(config.TIMEZONE)))
+        today_label = i18n.date_label(datetime.now(ZoneInfo(config.TIMEZONE)), lang="fr")
         msg = MIMEText(
             f"Tempo Certo a rencontré une erreur le {today_label} :\n\n{error_text}\n\n"
             f"Voir le log du jour dans {config.LOG_DIR}/ sur le VPS pour le détail complet."
