@@ -1,5 +1,7 @@
 # Tempo Certo
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Sends a daily Telegram notification (6:00 AM on weekdays, 7:30 AM on weekends) with:
 - whether to close/reopen the shutters and windows, and when — covers both
   hot weather (close before peak heat, reopen once it cools down) and
