@@ -2,6 +2,8 @@
 name = "tempo-certo"
 version = "0.1.0"
 description = "Daily Telegram/ntfy/email notification with shutters/windows and outfit advice based on the weather forecast."
+authors = [{ name = "sdr-dev-96" }]
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
