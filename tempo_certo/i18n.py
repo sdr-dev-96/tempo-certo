@@ -73,8 +73,6 @@ STRINGS = {
         "no_window_advice": "• Rien de particulier aujourd'hui (max {max_temp}°C, peu de vent)",
         "clothing_section_title": "*👕 Tenue du jour*",
         "clothing_summary": "{sky}, {min_temp}°C → {max_temp}°C (ressenti max {feels_max}°C)",
-        "commute_section_title": "*🚇 Trajet bureau (Paris)*",
-        "remote_note": "🏠 Télétravail aujourd'hui — pas de contrainte de trajet",
         "outfit_very_light": "Tenue très légère (coton/lin), vêtements amples et clairs.",
         "outfit_light_summer": "Tenue légère d'été, manches courtes.",
         "outfit_light_evening_jacket": "Tenue légère, une petite veste peut suffire le soir.",
@@ -90,16 +88,6 @@ STRINGS = {
         "wind_light": "Un peu de vent : une couche coupe-vent peut aider.",
         "uv_very_high": "Indice UV très élevé : crème solaire, chapeau et lunettes de soleil indispensables.",
         "uv_high": "Indice UV élevé : pensez à la protection solaire.",
-        "commute_rain_morning": (
-            "Pluie probable au moment du trajet ({hour}h) : "
-            "prends un parapluie pour le trajet/les transports."
-        ),
-        "commute_cold_morning": (
-            "Il fera frais sur le trajet du matin (ressenti {feels}°C) : "
-            "prévois une couche chaude pour l'attente sur le quai/l'arrêt."
-        ),
-        "commute_wind_morning": "Vent soutenu le matin : une capuche ou un bonnet peut aider en extérieur.",
-        "commute_rain_evening": "Pluie probable au retour ({hour}h) : garde le parapluie sur toi.",
     },
     "en": {
         "header": "☀️ *Tempo Certo* — {date}",
@@ -114,8 +102,6 @@ STRINGS = {
         "no_window_advice": "• Nothing special today (max {max_temp}°C, little wind)",
         "clothing_section_title": "*👕 Outfit of the day*",
         "clothing_summary": "{sky}, {min_temp}°C → {max_temp}°C (feels like up to {feels_max}°C)",
-        "commute_section_title": "*🚇 Office commute (Paris)*",
-        "remote_note": "🏠 Working from home today — no commute to worry about",
         "outfit_very_light": "Very light outfit (cotton/linen), loose and light-colored clothes.",
         "outfit_light_summer": "Light summer outfit, short sleeves.",
         "outfit_light_evening_jacket": "Light outfit, a light jacket may help in the evening.",
@@ -131,16 +117,6 @@ STRINGS = {
         "wind_light": "A bit of wind: a windbreaker layer can help.",
         "uv_very_high": "Very high UV index: sunscreen, hat and sunglasses essential.",
         "uv_high": "High UV index: consider sun protection.",
-        "commute_rain_morning": (
-            "Rain likely during your commute ({hour}h): "
-            "bring an umbrella for the trip/transit."
-        ),
-        "commute_cold_morning": (
-            "It'll be chilly on the morning commute (feels like {feels}°C): "
-            "plan a warm layer while waiting on the platform/stop."
-        ),
-        "commute_wind_morning": "Strong wind in the morning: a hood or beanie can help outdoors.",
-        "commute_rain_evening": "Rain likely on the way back ({hour}h): keep the umbrella with you.",
     },
 }
 

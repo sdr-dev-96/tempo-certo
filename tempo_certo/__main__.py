@@ -5,8 +5,7 @@ Sends a daily Telegram notification with:
   1. Whether to close/reopen the shutters and windows, and when:
      - hot weather -> when to close (before peak heat) and reopen in the evening
      - cold + windy weather -> when to keep windows closed to avoid drafts/heat loss
-  2. What to wear given the day's weather, including commute-specific notes
-     for office days in Paris (public transport exposure)
+  2. What to wear given the day's weather
 
 Uses the free Open-Meteo API (no API key required).
 Notification sent via Telegram by default. ntfy.sh and email (SMTP) are
@@ -25,7 +24,7 @@ import traceback
 import requests
 
 from . import config
-from .clothing_advice import analyze_clothing, get_today_work_mode
+from .clothing_advice import analyze_clothing
 from .log_setup import setup_logging
 from .message_builder import build_message
 from .notifiers import notify, send_error_email
@@ -63,11 +62,10 @@ def main():
             send_report_email(success=False, detail="No hourly data available for today (empty Open-Meteo response).")
             sys.exit(1)
 
-        work_mode = get_today_work_mode()
         sunrise_h = sunrise_hour(data)
         windows = analyze_windows(hours, sunrise_h)
-        clothing = analyze_clothing(hours, work_mode)
-        message = build_message(windows, clothing, work_mode)
+        clothing = analyze_clothing(hours)
+        message = build_message(windows, clothing)
 
         logger.info("Message built:\n%s", message)
 

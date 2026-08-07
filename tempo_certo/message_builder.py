@@ -7,7 +7,7 @@ from . import config, i18n
 from .i18n import t
 
 
-def build_message(windows, clothing, work_mode):
+def build_message(windows, clothing):
     today_label = i18n.date_label(datetime.now(ZoneInfo(config.TIMEZONE)))
     lines = []
     if config.GREETING_ENABLED:
@@ -59,15 +59,5 @@ def build_message(windows, clothing, work_mode):
     )
     for a in clothing["advice"]:
         lines.append(f"• {a}")
-
-    # Commute section (office days only)
-    if work_mode == "office" and clothing["commute_advice"]:
-        lines.append("")
-        lines.append(t("commute_section_title"))
-        for a in clothing["commute_advice"]:
-            lines.append(f"• {a}")
-    elif work_mode == "remote":
-        lines.append("")
-        lines.append(t("remote_note"))
 
     return "\n".join(lines)

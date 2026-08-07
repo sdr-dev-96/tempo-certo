@@ -1,27 +1,11 @@
 """Clothing advice logic."""
 
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-from . import config, i18n
+from . import i18n
 from .i18n import t
 
 
-def get_today_work_mode():
-    """Return 'office', 'remote' or 'off' for today, based on config.WORK_MODE_BY_WEEKDAY."""
-    weekday = datetime.now(ZoneInfo(config.TIMEZONE)).weekday()  # Monday = 0 ... Sunday = 6
-    return config.WORK_MODE_BY_WEEKDAY.get(weekday, "off")
-
-
-def hour_data(hours, target_hour):
-    """Return the hour dict closest to target_hour, or None if hours is empty."""
-    if not hours:
-        return None
-    return min(hours, key=lambda h: abs(h["hour"] - target_hour))
-
-
-def analyze_clothing(hours, work_mode):
-    """Build clothing advice from the day's weather, including commute notes."""
+def analyze_clothing(hours):
+    """Build clothing advice from the day's weather."""
     if not hours:
         return None
 
@@ -76,25 +60,6 @@ def analyze_clothing(hours, work_mode):
     elif max_uv >= 6:
         advice.append(t("uv_high"))
 
-    # --- Commute-specific advice (office days only) ---
-    commute_advice = []
-    if work_mode == "office":
-        morning = hour_data(hours, config.COMMUTE_MORNING_HOUR)
-        evening = hour_data(hours, config.COMMUTE_EVENING_HOUR)
-
-        if morning:
-            if morning["rain_prob"] >= 40:
-                commute_advice.append(t("commute_rain_morning", hour=config.COMMUTE_MORNING_HOUR))
-            if morning["feels_like"] <= 5:
-                commute_advice.append(
-                    t("commute_cold_morning", feels=round(morning["feels_like"]))
-                )
-            if morning["wind"] >= config.WINDY_THRESHOLD_KMH:
-                commute_advice.append(t("commute_wind_morning"))
-
-        if evening and evening["rain_prob"] >= 40:
-            commute_advice.append(t("commute_rain_evening", hour=config.COMMUTE_EVENING_HOUR))
-
     return {
         "day_min_temp": day_min,
         "day_max_temp": day_max,
@@ -104,5 +69,4 @@ def analyze_clothing(hours, work_mode):
         "max_uv": max_uv,
         "sky": i18n.weather_label(dominant_code),
         "advice": advice,
-        "commute_advice": commute_advice,
     }
