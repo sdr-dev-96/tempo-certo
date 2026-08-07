@@ -118,6 +118,14 @@ ERROR_ALERT_EMAIL_ENABLED = os.environ.get("ERROR_ALERT_EMAIL_ENABLED", "true").
 ERROR_ALERT_EMAIL_TO = os.environ.get("ERROR_ALERT_EMAIL_TO", SMTP_TO)
 
 # ---------------------------------------------------------------------------
+# Run report by email — a short English summary sent after every run
+# (success or failure), independent of NOTIFY_METHOD. Reuses the SMTP_*
+# credentials above.
+# ---------------------------------------------------------------------------
+REPORT_EMAIL_ENABLED = os.environ.get("REPORT_EMAIL_ENABLED", "true").lower() == "true"
+REPORT_EMAIL_TO = os.environ.get("REPORT_EMAIL_TO", SMTP_TO)
+
+# ---------------------------------------------------------------------------
 # Testing
 # ---------------------------------------------------------------------------
 

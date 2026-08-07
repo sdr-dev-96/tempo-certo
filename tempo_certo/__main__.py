@@ -29,6 +29,7 @@ from .clothing_advice import analyze_clothing, get_today_work_mode
 from .log_setup import setup_logging
 from .message_builder import build_message
 from .notifiers import notify, send_error_email
+from .report import send_report_email
 from .weather_api import fetch_forecast, hours_today, sunrise_hour
 from .windows_advice import analyze_windows
 
@@ -59,6 +60,7 @@ def main():
         if not hours:
             logger.error("No hourly data available for today.")
             send_error_email("Aucune donnée horaire disponible pour aujourd'hui (réponse Open-Meteo vide).")
+            send_report_email(success=False, detail="No hourly data available for today (empty Open-Meteo response).")
             sys.exit(1)
 
         work_mode = get_today_work_mode()
@@ -71,19 +73,23 @@ def main():
 
         if config.DRY_RUN:
             logger.info("DRY_RUN=1: notification not sent.")
+            send_report_email(success=True, detail="DRY_RUN=1: notification not sent.")
         else:
             notify(message)
             logger.info("Notification sent successfully via %s.", config.NOTIFY_METHOD)
+            send_report_email(success=True, detail=f"Notification sent successfully via {config.NOTIFY_METHOD}.")
 
     except requests.RequestException as e:
         logger.error("Network error while calling the weather API or notification service: %s", e)
         logger.error(traceback.format_exc())
         send_error_email(f"Erreur réseau (API météo ou service de notification) :\n{e}")
+        send_report_email(success=False, detail=f"Network error while calling the weather API or notification service:\n{e}")
         sys.exit(1)
     except Exception as e:
         logger.error("Unexpected error: %s", e)
         logger.error(traceback.format_exc())
         send_error_email(f"Erreur inattendue :\n{e}\n\n{traceback.format_exc()}")
+        send_report_email(success=False, detail=f"Unexpected error:\n{e}\n\n{traceback.format_exc()}")
         sys.exit(1)
 
 
