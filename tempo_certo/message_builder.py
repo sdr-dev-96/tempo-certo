@@ -7,57 +7,76 @@ from . import config, i18n
 from .i18n import t
 
 
-def build_message(windows, clothing):
-    today_label = i18n.date_label(datetime.now(ZoneInfo(config.TIMEZONE)))
-    lines = []
+def _accroche(today_label):
+    parts = []
     if config.GREETING_ENABLED:
-        lines.append(i18n.greeting())
-        lines.append("")
-    lines.append(t("header", date=today_label))
-    lines.append("")
+        parts.append(i18n.greeting_word())
+    if config.USER_FIRST_NAME:
+        parts.append(config.USER_FIRST_NAME)
+    prefix = ", ".join(parts)
+    if prefix:
+        return t("accroche_prefixed", prefix=prefix, date=today_label)
+    return t("accroche_plain", date=today_label)
 
-    # Windows section
-    lines.append(t("windows_section_title"))
-    any_window_advice = False
+
+def _today_section(clothing):
+    sentence = t(
+        "today_summary",
+        sky=clothing["sky"].capitalize(),
+        min_temp=round(clothing["day_min_temp"]),
+        max_temp=round(clothing["day_max_temp"]),
+        feels_max=round(clothing["feels_max"]),
+    )
+    if clothing["temp_swing"]:
+        sentence += " " + t("temp_swing")
+    return sentence
+
+
+def _clothing_section(clothing):
+    return " ".join(clothing["advice"])
+
+
+def _windows_section(windows):
+    sentences = []
 
     if windows["is_hot"]:
-        any_window_advice = True
-        lines.append(
-            t(
-                "hot_close",
-                close_hour=windows["hot_close_hour"],
-                max_temp=round(windows["day_max_temp"]),
-                max_temp_hour=windows["max_temp_hour"],
-            )
+        sentence = t(
+            "hot_close",
+            close_hour=windows["hot_close_hour"],
+            max_temp=round(windows["day_max_temp"]),
+            max_temp_hour=windows["max_temp_hour"],
         )
         if windows["hot_reopen_hour"]:
-            lines.append(t("hot_reopen", reopen_hour=windows["hot_reopen_hour"]))
+            sentence += t("hot_reopen", reopen_hour=windows["hot_reopen_hour"])
         else:
-            lines.append(t("hot_no_reopen"))
+            sentence += t("hot_no_reopen")
+        sentences.append(sentence)
 
     if windows["is_cold_windy"]:
-        any_window_advice = True
-        lines.append(
+        sentences.append(
             t("cold_windy", start=windows["cold_windy_start"], end=windows["cold_windy_end"])
         )
 
-    if not any_window_advice:
-        lines.append(t("no_window_advice", max_temp=round(windows["day_max_temp"])))
+    if not sentences:
+        sentences.append(t("no_window_advice", max_temp=round(windows["day_max_temp"])))
 
-    lines.append("")
+    return " ".join(sentences)
 
-    # Clothing section
-    lines.append(t("clothing_section_title"))
-    lines.append(
-        t(
-            "clothing_summary",
-            sky=clothing["sky"].capitalize(),
-            min_temp=round(clothing["day_min_temp"]),
-            max_temp=round(clothing["day_max_temp"]),
-            feels_max=round(clothing["feels_max"]),
-        )
-    )
-    for a in clothing["advice"]:
-        lines.append(f"• {a}")
+
+def build_message(windows, clothing):
+    today_label = datetime.now(ZoneInfo(config.TIMEZONE)).strftime(config.DATE_FORMAT)
+
+    lines = [
+        _accroche(today_label),
+        "",
+        t("today_title"),
+        _today_section(clothing),
+        "",
+        t("clothing_title"),
+        _clothing_section(clothing),
+        "",
+        t("windows_title"),
+        _windows_section(windows),
+    ]
 
     return "\n".join(lines)

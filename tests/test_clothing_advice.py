@@ -21,9 +21,9 @@ def test_hot_summer_day():
     assert result["day_max_temp"] == 32
     assert result["feels_max"] == 31
     assert result["sky"] == i18n.weather_label(0)
+    assert result["temp_swing"] is True
     assert result["advice"] == [
         i18n.t("outfit_very_light"),
-        i18n.t("temp_swing", min_temp=22, max_temp=32),
         i18n.t("uv_very_high"),
     ]
 
@@ -37,6 +37,7 @@ def test_cold_rainy_windy_day():
 
     result = analyze_clothing(hours)
 
+    assert result["temp_swing"] is False
     assert result["advice"] == [
         i18n.t("outfit_warm"),
         i18n.t("rain_high"),

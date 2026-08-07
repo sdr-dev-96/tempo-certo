@@ -39,8 +39,7 @@ def analyze_clothing(hours):
         advice.append(t("outfit_warm"))
 
     # Day/night temperature swing
-    if (day_max - day_min) >= 10:
-        advice.append(t("temp_swing", min_temp=round(day_min), max_temp=round(day_max)))
+    temp_swing = (day_max - day_min) >= 10
 
     # Rain (general)
     if max_rain_prob >= 60:
@@ -68,5 +67,6 @@ def analyze_clothing(hours):
         "max_wind": max_wind,
         "max_uv": max_uv,
         "sky": i18n.weather_label(dominant_code),
+        "temp_swing": temp_swing,
         "advice": advice,
     }

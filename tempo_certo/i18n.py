@@ -53,70 +53,80 @@ GREETINGS = {
     "en": ["Hello", "Hi", "Hey"],
 }
 
-# French typography puts a space before "!"; English doesn't.
-GREETING_PUNCTUATION = {
-    "fr": " !",
-    "en": "!",
-}
-
 STRINGS = {
     "fr": {
-        "header": "☀️ *Tempo Certo* — {date}",
-        "windows_section_title": "*🪟 Volets / fenêtres*",
-        "hot_close": "• Chaleur : fermer vers *{close_hour}h* (pic à *{max_temp}°C* vers {max_temp_hour}h)",
-        "hot_reopen": "• Réouverture possible vers *{reopen_hour}h* en soirée",
-        "hot_no_reopen": "• Garder fermé toute la soirée, la fraîcheur ne revient pas vite",
-        "cold_windy": (
-            "• Froid + vent : garder les fenêtres fermées entre *{start}h* "
-            "et *{end}h* pour éviter les déperditions de chaleur"
+        "accroche_prefixed": "{prefix}, voici le récap météo d'aujourd'hui ({date}) :",
+        "accroche_plain": "Voici le récap météo d'aujourd'hui ({date}) :",
+        "today_title": "🌡️ Aujourd'hui",
+        "today_summary": (
+            "{sky}, avec des températures entre {min_temp}°C et {max_temp}°C "
+            "(ressenti jusqu'à {feels_max}°C)."
         ),
-        "no_window_advice": "• Rien de particulier aujourd'hui (max {max_temp}°C, peu de vent)",
-        "clothing_section_title": "*👕 Tenue du jour*",
-        "clothing_summary": "{sky}, {min_temp}°C → {max_temp}°C (ressenti max {feels_max}°C)",
+        "temp_swing": (
+            "L'écart de température est marqué : prévoyez une couche à "
+            "enlever ou ajouter dans la journée."
+        ),
+        "clothing_title": "👕 Tenue",
         "outfit_very_light": "Tenue très légère (coton/lin), vêtements amples et clairs.",
         "outfit_light_summer": "Tenue légère d'été, manches courtes.",
         "outfit_light_evening_jacket": "Tenue légère, une petite veste peut suffire le soir.",
         "outfit_jacket_layers": "Prévoir une veste ou un pull, quelques couches.",
         "outfit_warm": "Habillage chaud : manteau, couches superposées.",
-        "temp_swing": (
-            "Écart de température important ({min_temp}°C à {max_temp}°C) : "
-            "prévoir une couche à enlever/ajouter dans la journée."
+        "rain_high": "Le risque de pluie est élevé, mieux vaut prendre un parapluie ou un imperméable.",
+        "rain_moderate": "Le risque de pluie est modéré, un parapluie de sécurité peut être utile.",
+        "wind_strong": "Du vent fort est prévu, évitez les vêtements amples et les parapluies fragiles.",
+        "wind_light": "Un peu de vent est prévu, une couche coupe-vent peut aider.",
+        "uv_very_high": "L'indice UV est très élevé, crème solaire, chapeau et lunettes de soleil sont indispensables.",
+        "uv_high": "L'indice UV est élevé, pensez à la protection solaire.",
+        "windows_title": "🪟 Fenêtres",
+        "hot_close": (
+            "Il va faire chaud aujourd'hui, avec un pic à {max_temp}°C vers {max_temp_hour}h : "
+            "pensez à fermer les fenêtres vers {close_hour}h."
         ),
-        "rain_high": "Risque de pluie élevé : parapluie ou imperméable conseillé.",
-        "rain_moderate": "Risque de pluie modéré : un parapluie de sécurité peut être utile.",
-        "wind_strong": "Vent fort prévu : évitez les vêtements amples/parapluies fragiles.",
-        "wind_light": "Un peu de vent : une couche coupe-vent peut aider.",
-        "uv_very_high": "Indice UV très élevé : crème solaire, chapeau et lunettes de soleil indispensables.",
-        "uv_high": "Indice UV élevé : pensez à la protection solaire.",
+        "hot_reopen": " Vous pourrez rouvrir en soirée, vers {reopen_hour}h.",
+        "hot_no_reopen": " Mieux vaut tout garder fermé pour la soirée, la fraîcheur ne reviendra pas vite.",
+        "cold_windy": (
+            "Avec le froid et le vent annoncés, gardez les fenêtres fermées entre "
+            "{start}h et {end}h pour limiter les déperditions de chaleur."
+        ),
+        "no_window_advice": "Rien de particulier à signaler côté fenêtres aujourd'hui (max {max_temp}°C, peu de vent).",
     },
     "en": {
-        "header": "☀️ *Tempo Certo* — {date}",
-        "windows_section_title": "*🪟 Shutters / windows*",
-        "hot_close": "• Heat: close around *{close_hour}h* (peak of *{max_temp}°C* around {max_temp_hour}h)",
-        "hot_reopen": "• Reopening possible around *{reopen_hour}h* in the evening",
-        "hot_no_reopen": "• Keep everything closed all evening, it won't cool down quickly",
-        "cold_windy": (
-            "• Cold + wind: keep windows closed between *{start}h* "
-            "and *{end}h* to avoid heat loss"
+        "accroche_prefixed": "{prefix}, here's today's weather recap ({date}):",
+        "accroche_plain": "Here's today's weather recap ({date}):",
+        "today_title": "🌡️ Today",
+        "today_summary": (
+            "{sky}, with temperatures between {min_temp}°C and {max_temp}°C "
+            "(feels like up to {feels_max}°C)."
         ),
-        "no_window_advice": "• Nothing special today (max {max_temp}°C, little wind)",
-        "clothing_section_title": "*👕 Outfit of the day*",
-        "clothing_summary": "{sky}, {min_temp}°C → {max_temp}°C (feels like up to {feels_max}°C)",
+        "temp_swing": (
+            "The temperature swing is significant, so plan a layer you can "
+            "add or remove during the day."
+        ),
+        "clothing_title": "👕 Outfit",
         "outfit_very_light": "Very light outfit (cotton/linen), loose and light-colored clothes.",
         "outfit_light_summer": "Light summer outfit, short sleeves.",
         "outfit_light_evening_jacket": "Light outfit, a light jacket may help in the evening.",
         "outfit_jacket_layers": "Bring a jacket or sweater, a few layers.",
         "outfit_warm": "Dress warmly: coat, layered clothing.",
-        "temp_swing": (
-            "Large temperature swing ({min_temp}°C to {max_temp}°C): "
-            "plan a layer you can add/remove during the day."
+        "rain_high": "The chance of rain is high, so an umbrella or raincoat is recommended.",
+        "rain_moderate": "There's a moderate chance of rain, so a backup umbrella could help.",
+        "wind_strong": "Strong wind is expected, so avoid loose clothing and flimsy umbrellas.",
+        "wind_light": "A bit of wind is expected, so a windbreaker layer can help.",
+        "uv_very_high": "The UV index is very high, so sunscreen, a hat and sunglasses are essential.",
+        "uv_high": "The UV index is high, so consider sun protection.",
+        "windows_title": "🪟 Windows",
+        "hot_close": (
+            "It's going to be hot today, peaking at {max_temp}°C around {max_temp_hour}h: "
+            "consider closing the windows around {close_hour}h."
         ),
-        "rain_high": "High chance of rain: umbrella or raincoat recommended.",
-        "rain_moderate": "Moderate chance of rain: a backup umbrella could help.",
-        "wind_strong": "Strong wind expected: avoid loose clothing/flimsy umbrellas.",
-        "wind_light": "A bit of wind: a windbreaker layer can help.",
-        "uv_very_high": "Very high UV index: sunscreen, hat and sunglasses essential.",
-        "uv_high": "High UV index: consider sun protection.",
+        "hot_reopen": " You'll be able to reopen in the evening, around {reopen_hour}h.",
+        "hot_no_reopen": " Better keep everything closed for the evening, it won't cool down quickly.",
+        "cold_windy": (
+            "With cold and wind expected, keep the windows closed between "
+            "{start}h and {end}h to limit heat loss."
+        ),
+        "no_window_advice": "Nothing special to report for the windows today (max {max_temp}°C, little wind).",
     },
 }
 
@@ -147,8 +157,7 @@ def weather_label(code, lang=None):
     return WEATHER_CODE_LABELS[lang].get(code, WEATHER_CODE_FALLBACK[lang])
 
 
-def greeting(lang=None):
-    """Return a random greeting, formatted with locale-appropriate punctuation."""
+def greeting_word(lang=None):
+    """Return a random greeting word, without punctuation (e.g. "Bonjour")."""
     lang = _lang(lang)
-    word = random.choice(GREETINGS[lang])
-    return f"{word}{GREETING_PUNCTUATION[lang]}"
+    return random.choice(GREETINGS[lang])
