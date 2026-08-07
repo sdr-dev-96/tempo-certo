@@ -53,6 +53,12 @@ LANGUAGE = os.environ.get("LANGUAGE", "fr")
 # Whether to prefix the notification with a greeting (e.g. "Bonjour !")
 GREETING_ENABLED = os.environ.get("GREETING_ENABLED", "true").lower() == "true"
 
+# First name used to personalize the notification's opening line (e.g. "Stéfane")
+USER_FIRST_NAME = os.environ.get("USER_FIRST_NAME", "")
+
+# Date format used in the notification, Python strftime syntax
+DATE_FORMAT = os.environ.get("DATE_FORMAT", "%d/%m/%Y")
+
 # "telegram" (recommended), "ntfy" (free, no account), or "email" (SMTP)
 NOTIFY_METHOD = "telegram"
 
